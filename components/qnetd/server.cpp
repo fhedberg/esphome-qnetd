@@ -1,4 +1,5 @@
 #include "server.h"
+#include <cinttypes>
 #include <cstdarg>
 #include <cstdio>
 
@@ -286,7 +287,7 @@ void Server::handle_init(int slot, const MsgDecoded &m, uint64_t now_ms) {
       clusters_[c].members++;
       s.phase = Phase::ACTIVE;
       reschedule_dpd(s, now_ms);
-      logf(LogLevel::INFO, "cluster \"%s\": node %u joined (%s, hb %u ms)",
+      logf(LogLevel::INFO, "cluster \"%s\": node %" PRIu32 " joined (%s, hb %" PRIu32 " ms)",
            s.cluster_name.c_str(), s.node_id, s.peer.c_str(), s.heartbeat_ms);
     }
   }
@@ -407,7 +408,8 @@ void Server::handle_vote_info_reply(int slot, const MsgDecoded &m) {
     return;
   }
   if (m.seq_number != s.vote_info_seq) {
-    logf(LogLevel::DEBUG, "stale vote-info reply from node %u (seq %u, expected %u)", s.node_id,
+    logf(LogLevel::DEBUG, "stale vote-info reply from node %" PRIu32 " (seq %" PRIu32 ", expected %" PRIu32 ")",
+         s.node_id,
          m.seq_number, s.vote_info_seq);
     return;
   }
@@ -723,9 +725,8 @@ size_t Server::ffsplit_send_votes(const TriggerView &tv, bool send_acks) {
     sent++;
     s.last_sent_vote = v;
     s.last_ack_nack = v;
-    logf(LogLevel::INFO, "cluster \"%s\": vote-info %s -> node %u (ring %u/%llu)",
-         clusters_[cluster].name.c_str(), vote_str(v), s.node_id, ring->node_id,
-         (unsigned long long)ring->seq);
+    logf(LogLevel::INFO, "cluster \"%s\": vote-info %s -> node %" PRIu32 " (ring %" PRIu32 "/%" PRIu64 ")",
+         clusters_[cluster].name.c_str(), vote_str(v), s.node_id, ring->node_id, ring->seq);
     send(i, build_vote_info(s.vote_info_seq, *ring, v));
   }
   return sent;
@@ -806,7 +807,7 @@ std::string Server::status_string() const {
       if (s.phase != Phase::ACTIVE || s.cluster != c)
         continue;
       char buf[48];
-      snprintf(buf, sizeof(buf), " %u=%s", s.node_id, vote_str(s.last_ack_nack));
+      snprintf(buf, sizeof(buf), " %" PRIu32 "=%s", s.node_id, vote_str(s.last_ack_nack));
       out += buf;
     }
   }

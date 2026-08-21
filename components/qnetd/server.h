@@ -103,6 +103,9 @@ class Server {
   void send_err(int slot, const MsgDecoded &m, ReplyErrorCode code) {
     send(slot, build_server_error(m.seq_number_set, m.seq_number, code));
   }
+#if defined(__GNUC__)
+  __attribute__((format(printf, 3, 4)))  // 'this' is argument 1
+#endif
   void logf(LogLevel lvl, const char *fmt, ...);
   void drain_closes(uint64_t now_ms);
   void disconnect_client(int slot, uint64_t now_ms, const char *why);
