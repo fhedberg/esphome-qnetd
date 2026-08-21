@@ -103,10 +103,20 @@ void QnetdComponent::loop() {
     sock->setblocking(false);
     int nodelay = 1;
     sock->setsockopt(IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(int));
-    // getpeername_to writes into a caller-owned buffer (esphome dropped the
-    // std::string-returning overload); same idiom as api_server.cpp
-    char peername[socket::SOCKADDR_STR_LEN];
-    sock->getpeername_to(peername);
+    // format the peer from the sockaddr accept() already gave us, instead of
+    // the Socket peername helpers whose API has changed across esphome
+    // releases (std::string getpeername() -> getpeername_to() -> removed)
+    char peername[46] = "?";  // INET6_ADDRSTRLEN
+    if (source_addr.ss_family == AF_INET) {
+      inet_ntop(AF_INET, &reinterpret_cast<struct sockaddr_in *>(&source_addr)->sin_addr,
+                peername, sizeof(peername));
+    }
+#if USE_NETWORK_IPV6
+    else if (source_addr.ss_family == AF_INET6) {
+      inet_ntop(AF_INET6, &reinterpret_cast<struct sockaddr_in6 *>(&source_addr)->sin6_addr,
+                peername, sizeof(peername));
+    }
+#endif
     int slot = server_->on_connect(now, peername);
     if (slot < 0) {
       sock->close();
