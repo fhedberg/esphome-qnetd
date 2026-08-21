@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  core-tests:
+    name: protocol tests (UBSan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: make test
+        working-directory: host
+
+  esphome-build:
+    name: host-platform build
+    # builds the component itself, which catches ESPHome API drift that the
+    # protocol tests cannot see (they compile the core without ESPHome)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: pip install esphome
+      - run: esphome compile qnetd-host.yaml
+        working-directory: example

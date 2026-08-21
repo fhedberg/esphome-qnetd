@@ -1,0 +1,54 @@
+# Interop test: two containers form a corosync/knet cluster whose
+# corosync-qdevice points at the qnetd implementation under test.
+#
+# Two networks model the interesting failure: `ring` carries corosync
+# (the cluster's private interconnect), `lan` carries the qdevice->arbiter connection. Cutting
+# a node's `ring` produces a genuine 50:50 split with the arbiter reachable
+# from both sides:
+#
+#   docker network disconnect integration_ring integration-node2-1
+#
+# Expect: exactly one node stays quorate (tie_breaker lowest -> node1).
+#
+#   docker compose up --build -d
+#   docker compose exec node1 corosync-quorumtool -s   # 3/3 + Qdevice
+#
+# To test an ESP instead of qnetd_lite: remove the qnetd service and add to
+# both nodes:  extra_hosts: ["qnetd:<esp-ip>"]
+services:
+  qnetd:
+    build:
+      context: ..
+      dockerfile: integration/Dockerfile.qnetd-lite
+    networks: [lan]
+
+  node1:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    hostname: node1
+    privileged: true
+    networks:
+      lan: {}
+      ring:
+        ipv4_address: 172.28.0.11
+    depends_on: [qnetd]
+
+  node2:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    hostname: node2
+    privileged: true
+    networks:
+      lan: {}
+      ring:
+        ipv4_address: 172.28.0.12
+    depends_on: [qnetd]
+
+networks:
+  lan: {}
+  ring:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24

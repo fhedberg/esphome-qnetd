@@ -1,0 +1,59 @@
+# qnetd arbiter on an Olimex ESP32-POE-ISO: wired Ethernet with PoE, so one
+# cable carries both data and power.
+esphome:
+  name: qnetd-arbiter
+  friendly_name: Qnetd arbiter
+
+esp32:
+  board: esp32-poe-iso
+  framework:
+    type: esp-idf
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+
+logger:
+  level: DEBUG
+
+api:
+  # MANDATORY for an arbiter: Home Assistant may be a guest on the very
+  # cluster this device arbitrates. Never reboot because HA is unreachable.
+  reboot_timeout: 0s
+
+ota:
+  - platform: esphome
+
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk_mode: GPIO17_OUT
+  phy_addr: 0
+  power_pin: GPIO12
+  # a quorum arbiter wants a fixed address; set your site's values
+  manual_ip:
+    static_ip: 192.168.1.53
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+
+qnetd:
+  port: 5403
+
+sensor:
+  - platform: qnetd
+    connected_clients:
+      name: Connected cluster nodes
+    decisions:
+      name: Quorum decisions
+
+binary_sensor:
+  - platform: qnetd
+    vote_granted:
+      name: Vote granted
+
+text_sensor:
+  - platform: qnetd
+    status:
+      name: Quorum status

@@ -1,0 +1,3 @@
+host/build/
+example/.esphome/
+__pycache__/

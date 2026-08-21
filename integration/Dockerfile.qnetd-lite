@@ -1,0 +1,11 @@
+FROM debian:13-slim AS build
+RUN apt-get update && apt-get install -y --no-install-recommends g++ make && rm -rf /var/lib/apt/lists/*
+COPY components/qnetd /src/components/qnetd
+COPY host /src/host
+WORKDIR /src/host
+RUN rm -rf build && make build/qnetd_lite CXX=g++
+
+FROM debian:13-slim
+COPY --from=build /src/host/build/qnetd_lite /usr/local/bin/qnetd_lite
+EXPOSE 5403
+CMD ["qnetd_lite", "5403"]

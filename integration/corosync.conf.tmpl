@@ -1,0 +1,35 @@
+totem {
+  version: 2
+  cluster_name: testcluster
+  transport: knet
+  crypto_cipher: none
+  crypto_hash: none
+}
+nodelist {
+  node {
+    name: node1
+    nodeid: 1
+    ring0_addr: 172.28.0.11
+  }
+  node {
+    name: node2
+    nodeid: 2
+    ring0_addr: 172.28.0.12
+  }
+}
+quorum {
+  provider: corosync_votequorum
+  device {
+    votes: 1
+    model: net
+    net {
+      tls: on
+      host: qnetd
+      algorithm: ffsplit
+      tie_breaker: lowest
+    }
+  }
+}
+logging {
+  to_stderr: yes
+}

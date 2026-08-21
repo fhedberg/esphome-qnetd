@@ -1,0 +1,37 @@
+# Run the component natively on a PC instead of an ESP: `esphome run
+# qnetd-host.yaml` builds a normal binary that listens on TCP 5403 and
+# speaks the same protocol the ESP does. Useful for development, and for
+# pointing the integration/ containers at the real component rather than
+# host/qnetd_lite.
+esphome:
+  name: qnetd-host
+
+host:
+
+logger:
+  level: DEBUG
+
+external_components:
+  - source:
+      type: local
+      path: ../components
+
+qnetd:
+  port: 5403
+
+sensor:
+  - platform: qnetd
+    connected_clients:
+      name: Connected cluster nodes
+    decisions:
+      name: Quorum decisions
+
+binary_sensor:
+  - platform: qnetd
+    vote_granted:
+      name: Vote granted
+
+text_sensor:
+  - platform: qnetd
+    status:
+      name: Quorum status

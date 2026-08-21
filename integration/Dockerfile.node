@@ -1,0 +1,8 @@
+FROM debian:13-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      corosync corosync-qdevice libnss3-tools procps iproute2 && \
+    rm -rf /var/lib/apt/lists/*
+COPY corosync.conf.tmpl /etc/corosync/corosync.conf.tmpl
+COPY node-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
